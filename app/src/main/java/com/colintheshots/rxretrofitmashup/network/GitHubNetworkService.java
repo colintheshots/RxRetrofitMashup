@@ -29,6 +29,17 @@ import rx.observables.GroupedObservable;
  * and a bound service is a poor choice, one may use a service
  * to cache returned data and provide it to any activity.
  *
+ * If you choose to use an activity for your observables,
+ * be sure to look at
+ * AndroidObservable.bindActivity(Activity activity, Observable<T> source)
+ *
+ * From the code comments for this function:
+ * "This helper will schedule the given sequence to be observed on the main
+ * UI thread and ensure that no notifications will be forwarded to the
+ * activity in case it is scheduled to finish. You should unsubscribe from
+ * the returned Observable in onDestroy at the latest, in order to not leak
+ * the activity or an inner subscriber."
+ *
  * Created by colin.lee on 10/10/14.
  */
 public class GitHubNetworkService extends Service {
