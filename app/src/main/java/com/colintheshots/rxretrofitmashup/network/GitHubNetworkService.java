@@ -121,44 +121,16 @@ public class GitHubNetworkService extends Service {
     public void getGists() {
 
         mGitHubClient.gists()
-        .flatMap(new Func1<List<Gist>, Observable<Gist>>() { // first flatten the list of gists returned with Observable.from()
-            @Override
-            public Observable<Gist> call(List<Gist> gists) {
-                return Observable.from(gists);
-            }
-        })
-        .observeOn(AndroidSchedulers.mainThread())
+        .flatMap(Observable::from)
         .take(2) // take the first two gists
         .cache() // only request the list of gists once and then save it
-        .groupBy(new Func1<Gist, String>() {
-            @Override
-            public String call(Gist gist) {
-                return gist.getId();
-            }
-        })
-        .flatMap(new Func1<GroupedObservable<String, Gist>, Observable<GistDetail>>() {
-            @Override
-            public Observable<GistDetail> call(GroupedObservable<String, Gist> stringGistGroupedObservable) {
-                return mGitHubClient.gist(stringGistGroupedObservable.getKey());
-            }
-        })
+        .groupBy(Gist::getId)
+        .flatMap(stringGistGroupedObservable -> mGitHubClient.gist(stringGistGroupedObservable.getKey()))
         .timeout(5000, TimeUnit.MILLISECONDS)
         .retry(1) // retry once on errors
         .toList() // this will block, which we want
         .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(new Action1<List<GistDetail>>() {
-            @Override
-            public void call(List<GistDetail> gistDetails) {
-                mCallback.displayFiles(gistDetails);
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        });
-
-
+        .subscribe(mCallback::displayFiles, Throwable::printStackTrace);
     }
 
 }
